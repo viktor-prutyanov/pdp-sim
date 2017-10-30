@@ -1,2 +1,2 @@
 # pdp-sim
-PDP simulator
+PDP-11 simulator
