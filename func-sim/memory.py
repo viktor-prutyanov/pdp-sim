@@ -1,8 +1,12 @@
 from array import array
 
 class Memory:
-    def __init__(self, length):
-        self.data = array('H', [0] * length)
+    def __init__(self, filename, length):
+        self.data = array('H', [])
+        with open(filename, 'rb') as f:
+            self.data.fromfile(f, length)
+            
+        _, self.length = self.data.buffer_info()
 
     def read(self, addr):
         word = self.data[addr]
