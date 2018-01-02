@@ -10,9 +10,9 @@ class Memory:
 
     def read(self, addr):
         word = self.data[addr]
-        print("read from {0:#04x} = {1:#04x}".format(addr, word))
+        print("read from 0x{0:04x} = 0x{1:04x}".format(addr, word))
         return word
 
     def write(self, addr, word):
-        print("write {0:#04x} to {1:#04x}".format(addr, word))
+        print("write 0x{0:04x} to 0x{1:04x}".format(addr, word))
         self.data[addr] = word
