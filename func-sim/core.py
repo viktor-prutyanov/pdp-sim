@@ -17,33 +17,52 @@ class Mode(Enum):
     Index = 6
     IndexDef = 7
 
+class ModePC(Enum):
+    Immediate = 2
+    Absolute = 3
+    Relative = 6
+    RelativeDef = 7
+
 class Core:
     def __init__(self, filename, length):
-        self.regfile = RegFile(Memory.ROM // 2)
+        self.regfile = RegFile(Memory.ROM)
         self.memory = Memory(filename, length)
         self.is_halted = False
 
     def get_src(self, byte):
         mode = (byte & 0o70) >> 3
         reg = byte & 0o7
-        get_addr = lambda addr: self.memory.read(addr)
+        get_by_addr = lambda addr: self.memory.read(addr)
 
-        if mode == Mode.Reg:
-            return self.regfile[reg]
-        elif mode == Mode.RegDef:
-            return get_addr(self.regfile[reg] // 2)
-        elif mode == Mode.AutoIncr:
-            res = get_addr(self.regfile[reg] // 2)
-            self.regfile[reg] += 1
-            return res
-        elif mode == Mode.AutoIncrDef:
-            res = get_addr(get_addr(self.regfile[reg]) // 2)
-            self.regfile[reg] += 1
-            return res
-        elif mode == Mode.Index:
-            self.set_next_pc()
-            offset = memory.read(self.get_cur_pc())
-            return get_addr((offset + self.regfile[reg]) // 2)
+        if reg != 7: # 111b
+            print(mode)
+            if mode == Mode.Reg:
+                return self.regfile[reg]
+            elif mode == Mode.RegDef:
+                return get_by_addr(self.regfile[reg])
+            elif mode == Mode.AutoIncr:
+                res = get_by_addr(self.regfile[reg])
+                self.regfile[reg] += 2
+                return res
+            elif mode == Mode.AutoIncrDef:
+                res = get_by_addr(get_addr(self.regfile[reg]))
+                self.regfile[reg] += 2
+                return res
+            elif mode == Mode.Index:
+                self.set_next_pc()
+                offset = memory.read(self.get_cur_pc())
+                return get_by_addr((offset + self.regfile[reg]))
+        else:
+            print(mode)
+            if mode == ModePC.Immediate:
+                print(mode)
+                self.set_next_pc()
+                res = memory.read(self.get_cur_pc())
+                print(res)
+                return res
+            elif mode == ModePC.Absolute:
+                self.set_next_pc()
+                return get_addr(memory.read(self.get_cur_pc()))
 
 
     def set_dst(self, byte, value):
@@ -51,20 +70,26 @@ class Core:
         reg = byte & 0o7
         set_addr = lambda addr, word: self.memory.write(addr, word)
 
-        if mode == Mode.Reg:
-            self.regfile[reg] = value
-        elif mode == Mode.RegDef:
-            set_addr(self.regfile[reg], value)
-        elif mode == Mode.AutoIncr:
-            set_addr(self.regfile[reg], value)
-            self.regfile[reg] += 1
-        elif mode == Mode.AutoIncrDef:
-            set_addr(self.memory.read(self.regfile[reg]))
-            self.regfile[reg] += 1
+        if reg != 7:
+            if mode == Mode.Reg:
+                self.regfile[reg] = value
+            elif mode == Mode.RegDef:
+                set_addr(self.regfile[reg], value)
+            elif mode == Mode.AutoIncr:
+                set_addr(self.regfile[reg], value)
+                self.regfile[reg] += 2
+            elif mode == Mode.AutoIncrDef:
+                set_addr(self.memory.read(self.regfile[reg]), value)
+                self.regfile[reg] += 2
+        else:
+            if mode == ModePC.Absolute:
+                self.set_next_pc()
+                return set_addr(memory.read(self.get_cur_pc()), value)
 
         return
 
     def decode(self, word):
+        print(word)
         instrs = [
         #     Name     Mask   Shift CheckVal    Type              Handler
             ('halt',  0xFFFF,   0,  0x0000, InstrType.ZeroOp,   self.ex_halt),
@@ -94,7 +119,7 @@ class Core:
 
     def set_next_pc(self):
         pc = self.regfile.get_pc()
-        self.regfile.set_pc(pc + 1)
+        self.regfile.set_pc(pc + 2)
 
     def get_cur_pc(self):
         return self.regfile.get_pc()

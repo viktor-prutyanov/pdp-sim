@@ -1,5 +1,6 @@
 from array import array
 from enum import Enum
+import random
 
 class Memory:
     """
@@ -37,10 +38,18 @@ class Memory:
         _, self.length = self.data.buffer_info()
 
     def read(self, addr):
-        word = self.data[addr]
+        word = self.data[addr // 2]
         print("read from 0x{0:04x} = 0x{1:04x}".format(addr, word))
         return word
 
     def write(self, addr, word):
         print("write 0x{0:04x} to 0x{1:04x}".format(addr, word))
-        self.data[addr] = word
+        self.data[addr // 2] = word
+
+    def get_vram_range(self):
+        for idx in range(Memory.VRAM // 2, Memory.ROM // 2):
+            yield self.data[idx]
+
+    def fill_vram(self):
+        for idx in range(Memory.VRAM // 2, Memory.ROM // 2):
+            self.data[idx] = random.randint(0, 255)

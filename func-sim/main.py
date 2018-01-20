@@ -1,10 +1,11 @@
 #!/usr/bin/python3
 
 from core import Core
-from math import sin
+from display import Display
 import sys
 import os
 import tkinter as tk
+import time
 
 def update_regs():
     reg_n = 0
@@ -26,24 +27,6 @@ def step(event):
         step_button['state'] = 'disabled'
         run_button['state'] = 'disabled'
 
-
-class Display:
-    WIDTH  = 256
-    HEIGHT = 256
-
-    def __init__(self, top):
-        # @brief draw bitmap image
-        WIDTH, HEIGHT = 256, 256
-
-        canvas = tk.Canvas(top, width=WIDTH, height=HEIGHT, bg="#000000")
-        canvas.pack()
-        img = tk.PhotoImage(width=WIDTH, height=HEIGHT)
-        canvas.create_image((WIDTH/2, HEIGHT/2), image=img, state="normal")
-
-        for x in range(4 * WIDTH):
-            y = int(HEIGHT/2 + HEIGHT/4 * sin(x/80.0))
-            img.put("#ffffff", (x//4,y))
-
 if __name__ == "__main__":
     if (len(sys.argv) != 2):
         print("usage: {} file.bin".format(sys.argv[0]))
@@ -55,7 +38,10 @@ if __name__ == "__main__":
 
     top = tk.Tk()
 
-    display = Display(top)
+    display = Display(top, core.memory)
+    #display.display_sin()
+    #core.memory.fill_vram()
+    #display.display_vram()
 
     step_button = tk.Button(top, text="Step")
     step_button.bind("<Button-1>", step)
