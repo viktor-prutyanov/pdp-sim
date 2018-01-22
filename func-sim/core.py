@@ -35,7 +35,6 @@ class Core:
         get_by_addr = lambda addr: self.memory.read(addr)
 
         if reg != 7: # 111b
-            print(mode)
             if mode == Mode.Reg:
                 return self.regfile[reg]
             elif mode == Mode.RegDef:
@@ -53,7 +52,6 @@ class Core:
                 offset = memory.read(self.get_cur_pc())
                 return get_by_addr((offset + self.regfile[reg]))
         else:
-            print(mode)
             if mode == ModePC.Immediate:
                 print(mode)
                 self.set_next_pc()
@@ -89,7 +87,6 @@ class Core:
         return
 
     def decode(self, word):
-        print(word)
         instrs = [
         #     Name     Mask   Shift CheckVal    Type              Handler
             ('halt',  0xFFFF,   0,  0x0000, InstrType.ZeroOp,   self.ex_halt),

@@ -53,3 +53,31 @@ class Memory:
     def fill_vram(self):
         for idx in range(Memory.VRAM // 2, Memory.ROM // 2):
             self.data[idx] = random.randint(0, 255)
+
+    def fill_vram_with_sharp(self):
+        for block in range(Memory.VRAM // 8, Memory.ROM // 8):
+            pos = block * 4
+            self.data[pos] = 0x2424
+            self.data[pos + 1] = 0xFF24
+            self.data[pos + 2] = 0x24FF
+            self.data[pos + 3] = 0x2424
+
+    def fill_vram_with_line(self):
+        for block in range(Memory.VRAM // 32, Memory.ROM // 32):
+            pos = block * 16
+            self.data[pos] = 0xFFFF
+            self.data[pos + 1] = 0xFFFF
+            self.data[pos + 2] = 0xFFFF
+            self.data[pos + 3] = 0xFFFF
+            self.data[pos + 4] = 0x0000
+            self.data[pos + 5] = 0x0000
+            self.data[pos + 6] = 0x0000
+            self.data[pos + 7] = 0x0000
+            self.data[pos + 8] = 0x1818
+            self.data[pos + 9] = 0x1818
+            self.data[pos + 10] = 0x1818
+            self.data[pos + 11] = 0x1818
+            self.data[pos + 12] = 0x1818
+            self.data[pos + 13] = 0x1818
+            self.data[pos + 14] = 0x1818
+            self.data[pos + 15] = 0x1818

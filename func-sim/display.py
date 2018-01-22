@@ -4,8 +4,11 @@ import tkinter as tk
 import random
 
 class Display:
-    WIDTH  = 256
-    HEIGHT = 256
+    WIDTH  = 512
+    HEIGHT = 512
+
+    SYM_HEIGHT = 8
+    SYM_WIDTH = 8
 
     def __init__(self, top, memory):
         self.memory = memory
@@ -14,6 +17,7 @@ class Display:
         canvas = tk.Canvas(top, width=Display.WIDTH, height=Display.HEIGHT, bg="#000000")
         canvas.pack()
         self.img = tk.PhotoImage(width=Display.WIDTH, height=Display.HEIGHT)
+        #self.img.zoom(10, 10)
         canvas.create_image(0, 0, image = self.img, anchor=tk.NW)
 
     def display_sin(self):
@@ -39,12 +43,20 @@ class Display:
                 else:
                     colors.append("#ffffff")
 
-        row = 0; col = 0
-        for color in colors:
-           self.img.put(color, (row,col))
-           col += 1
-           if col == Display.WIDTH:
-               row +=1; col = 0
+        #row = 0; col = 0
+        #for color in colors:
+        #   self.img.put(color, (row,col))
+        #   col += 1
+        #   if col == Display.WIDTH:
+        #       row +=1; col = 0
+
+        pos = 0
+        for height_block in range(0, Display.HEIGHT // Display.SYM_HEIGHT):
+            for width_block in range(0, Display.WIDTH // Display.SYM_WIDTH):
+                for row in range(height_block * Display.SYM_HEIGHT, (height_block + 1) * Display.SYM_HEIGHT):
+                    for col in range(width_block * Display.SYM_WIDTH, (width_block + 1) * Display.SYM_WIDTH):
+                        self.img.put(colors[pos], (col,row))
+                        pos += 1
 
     def get_bitmap(self, word):
         for i in range(0, 16):
