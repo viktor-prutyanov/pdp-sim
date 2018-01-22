@@ -39,11 +39,11 @@ class Memory:
 
     def read(self, addr):
         word = self.data[addr // 2]
-        print("read from 0x{0:04x} = 0x{1:04x}".format(addr, word))
+        print("Memory : read  0x{0:04x} =  0x{1:04x}".format(addr, word))
         return word
 
     def write(self, addr, word):
-        print("write 0x{0:04x} to 0x{1:04x}".format(addr, word))
+        print("Memory : write 0x{0:04x} <- 0x{1:04x}".format(addr, word))
         self.data[addr // 2] = word
 
     def get_vram_range(self):
@@ -81,3 +81,4 @@ class Memory:
             self.data[pos + 13] = 0x1818
             self.data[pos + 14] = 0x1818
             self.data[pos + 15] = 0x1818
+

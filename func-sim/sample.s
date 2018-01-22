@@ -8,3 +8,4 @@ asl r1
 mov (r0), (r2)
 
 halt
+

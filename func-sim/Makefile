@@ -1,10 +1,13 @@
 AS=${BINUTILS}/gas/as-new
 OBJCOPY=${BINUTILS}/binutils/objcopy
 
-sample.bin: sample.s
-	$(AS) $^ -o sample.o
-	$(OBJCOPY) -O binary sample.o $@
-	rm -f sample.o
+all: sample.bin
+
+%.bin: %.s
+	$(AS) $^ -o $^.o
+	$(OBJCOPY) -O binary $^.o $@.huge
+	dd if=$@.huge of=$@ bs=1K skip=48
+	rm -f $^.o
 
 .PHONY: clean
 
