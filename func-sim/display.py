@@ -34,7 +34,7 @@ class Display:
            if col == Display.WIDTH:
                row +=1; col = 0
 
-    def display_vram(self):
+    def display_vram(self, offset):
         colors = []
         for word in self.memory.get_vram_range():
             for bit in self.get_bitmap(word):
@@ -43,19 +43,13 @@ class Display:
                 else:
                     colors.append("#ffffff")
 
-        #row = 0; col = 0
-        #for color in colors:
-        #   self.img.put(color, (row,col))
-        #   col += 1
-        #   if col == Display.WIDTH:
-        #       row +=1; col = 0
-
         pos = 0
-        for height_block in range(0, Display.HEIGHT // Display.SYM_HEIGHT):
+        full_offset = offset * Display.WIDTH * Display.SYM_HEIGHT
+        for height_block in range(0, Display.HEIGHT // Display.SYM_HEIGHT - offset):
             for width_block in range(0, Display.WIDTH // Display.SYM_WIDTH):
                 for row in range(height_block * Display.SYM_HEIGHT, (height_block + 1) * Display.SYM_HEIGHT):
                     for col in range(width_block * Display.SYM_WIDTH, (width_block + 1) * Display.SYM_WIDTH):
-                        self.img.put(colors[pos], (col,row))
+                        self.img.put(colors[pos + full_offset], (col,row))
                         pos += 1
 
     def get_bitmap(self, word):

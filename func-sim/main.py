@@ -41,7 +41,7 @@ if __name__ == "__main__":
     display = Display(top, core.memory)
     #display.display_sin()
     core.memory.fill_vram_with_line()
-    display.display_vram()
+    display.display_vram(53)
 
     step_button = tk.Button(top, text="Step")
     step_button.bind("<Button-1>", step)
