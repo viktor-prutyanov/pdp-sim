@@ -14,11 +14,11 @@ class Display:
         self.memory = memory
 
         # @brief draw bitmap image
-        canvas = tk.Canvas(top, width=Display.WIDTH, height=Display.HEIGHT, bg="#000000")
-        canvas.pack()
+        self.canvas = tk.Canvas(top, width=Display.WIDTH, height=Display.HEIGHT, bg="#000000")
+        self.canvas.pack(side='left')
         self.img = tk.PhotoImage(width=Display.WIDTH, height=Display.HEIGHT)
         #self.img.zoom(10, 10)
-        canvas.create_image(0, 0, image = self.img, anchor=tk.NW)
+        self.canvas.create_image(0, 0, image = self.img, anchor=tk.NW)
 
     def display_sin(self):
         for x in range(4 * Display.WIDTH):

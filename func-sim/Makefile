@@ -7,7 +7,7 @@ all: sample.bin
 	$(AS) $^ -o $^.o
 	$(OBJCOPY) -O binary $^.o $@.huge
 	dd if=$@.huge of=$@ bs=1K skip=48
-	rm -f $^.o
+	rm -f $^.o $@.huge
 
 .PHONY: clean
 

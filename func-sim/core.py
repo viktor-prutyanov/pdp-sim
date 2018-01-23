@@ -30,11 +30,31 @@ def byte_get_num(byte):
     else:
         return byte
 
+def addr_to_str(a):
+    mode = (a & 0o70) >> 3
+    reg = a & 0o7
+    
+    if reg != 7:
+        if mode == Mode.Reg:
+            return "R{}".format(reg)
+        elif mode == Mode.RegDef:
+            return "(R{})".format(reg)
+        elif mode == Mode.AutoIncr:
+            return "(R{})+".format(reg)
+        else:
+            return "[INV]"
+    else:
+        if mode == ModePC.Immediate:
+            return "$imm"
+        else:
+            return "[INV]"
+
 class Core:
     def __init__(self, filename, length):
         self.regfile = RegFile(Memory.ROM)
         self.memory = Memory(filename, length)
         self.is_halted = False
+        self.step_cnt = 0
 
     def get_src(self, byte):
         mode = (byte & 0o70) >> 3
@@ -67,7 +87,6 @@ class Core:
             elif mode == ModePC.Absolute:
                 self.set_next_pc()
                 return get_addr(self.memory.read(self.get_cur_pc()))
-
 
     def set_dst(self, byte, value):
         mode = (byte & 0o70) >> 3
@@ -111,25 +130,33 @@ class Core:
         for instr in instrs:
             if ((word & instr[1]) >> instr[2]) == instr[3]:
                 if instr[4] == InstrType.ZeroOp:
-                    self.instr = {'type': instr[4], 'name': instr[0], 'execute': instr[5]}
+                    self.instr = {'type': instr[4], 'name': instr[0], 'execute': instr[5],
+                            'str': instr[0]}
                 elif instr[4] == InstrType.OneOp:
+                    string = "{} {}".format(instr[0], addr_to_str((word & 0o77)))
                     self.instr = {'type': instr[4], 'name': instr[0], 'execute': instr[5], 
-                            'addr': (word & 0o77)}
+                            'addr': (word & 0o77), 'str': string}
                 elif instr[4] == InstrType.TwoOp:
+                    src = (word & 0o7700) >> 6
+                    dst = (word & 0o77)
+                    string = "{} {} {}".format(instr[0], addr_to_str(src), addr_to_str(dst))
                     self.instr = {'type': instr[4], 'name': instr[0], 'execute': instr[5], 
-                            'src': (word & 0o7700) >> 6, 'dst': (word & 0o77)}
+                            'src': src, 'dst': dst, 'str': string}
                 elif instr[4] == InstrType.Branch:
+                    offset = byte_get_num(word & 0x00FF)
+                    string = "{} {}".format(instr[0], offset)
                     self.instr = {'type': instr[4], 'name': instr[0], 'execute': instr[5],
-                            'offset': byte_get_num(word & 0x00FF)}
-                elif instr[4] == InstrType.Branch:
-                    self.instr = {'type': instr[4], 'name': instr[0], 'execute': instr[5],
-                            'offset': byte_get_num(word & 0x00FF)}
+                            'offset': offset, 'str': string}
                 else:
+                    string = "[INV INSTR]"
                     self.instr = None
 
+                self.last_instr_string = string
                 return
 
-        self.instr = None
+            string = "[INV INSTR]"
+            self.instr = None
+            self.last_instr_string = string
 
     def set_z_flag(self, val):
         if (val == 0):
@@ -217,6 +244,8 @@ class Core:
         self.decode(self.memory.read(pc))
         print(self.instr)
         self.execute()
+        self.step_cnt += 1
+        return self.last_instr_string
 
     def run(self):
         while not self.is_halted:

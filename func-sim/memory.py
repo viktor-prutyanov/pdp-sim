@@ -43,8 +43,15 @@ class Memory:
         return word
 
     def write(self, addr, word):
-        print("Memory : write 0x{0:04x} <- 0x{1:04x}".format(addr, word))
-        self.data[addr // 2] = word
+        if (addr == 0xFC00):
+            print("I/O    : display <- {}".format(word))
+            self.display_handler(word)
+        else:
+            print("Memory : write 0x{0:04x} <- 0x{1:04x}".format(addr, word))
+            self.data[addr // 2] = word
+
+    def set_display_handler(self, func):
+        self.display_handler = func
 
     def get_vram_range(self):
         for idx in range(Memory.VRAM // 2, Memory.ROM // 2):

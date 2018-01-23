@@ -33,7 +33,8 @@ def run(event):
 def step(event):
     if step_button['state'] == 'disabled':
         return
-    core.step()
+    last_instr_str = core.step()
+    lb.insert(core.step_cnt, last_instr_str)
     update_regs()
     if core.is_halted:
         step_button['state'] = 'disabled'
@@ -50,10 +51,9 @@ if __name__ == "__main__":
 
     top = tk.Tk()
 
-    #display = Display(top, core.memory)
-    #display.display_sin()
+    display = Display(top, core.memory)
     core.memory.fill_vram_with_line()
-    display.display_vram(53)
+    core.memory.set_display_handler(display.display_vram)
 
     step_button = tk.Button(top, text="Step")
     step_button.bind("<Button-1>", step)
@@ -68,16 +68,19 @@ if __name__ == "__main__":
     reg_n = 0
     for reg in core.regfile.regs:
         reg_labels.append(tk.Label(top, text="R{}".format(reg_n)))
-        reg_labels[reg_n].pack()
+        reg_labels[reg_n].pack(side='bottom')
         reg_entries.append(tk.Label(top, bg='white'))
-        reg_entries[reg_n].pack()
+        reg_entries[reg_n].pack(side='bottom')
         reg_n = reg_n + 1
         
     z_label = tk.Label(top, text="Z")
-    z_label.pack()
+    z_label.pack(side='bottom')
     z_entry = tk.Label(top, bg='white')
-    z_entry.pack()
+    z_entry.pack(side='bottom')
 
     update_regs()
+
+    lb = tk.Listbox(top, height=50)
+    lb.pack(side='right')
 
     top.mainloop()
