@@ -1,5 +1,7 @@
 from array import array
+from cache import CacheFA, CacheDM
 from enum import Enum
+import tkinter as tk
 import random
 
 class Memory:
@@ -21,11 +23,18 @@ class Memory:
     ROM  = 0xC000
     IO   = 0xFC00
 
+    NoCache = 0
+    FullyAssociative = 1
+    DirectMapped = 2
+
     memory_size = 64 * 1024 # 64 Kb
 
     def __init__(self, filename, length):
         self.data = array('H', [0] * (Memory.memory_size // 2))
         rom = array('H', [])
+        self.clock = 0
+        self.cache = None
+        self.use_cache = False
 
         # @brief load bin to ROM
         with open(filename, 'rb') as f:
@@ -37,18 +46,61 @@ class Memory:
 
         _, self.length = self.data.buffer_info()
 
-    def read(self, addr):
-        word = self.data[addr // 2]
-        print("Memory : read  0x{0:04x} =  0x{1:04x}".format(addr, word))
+    def set_cache_type(self, cache_type, length):
+        if cache_type == Memory.FullyAssociative:
+            self.cache = CacheFA(length, self.__write, self.__read)
+            self.use_cache = True
+            print("Cache enabled, fully associative, length = ", length)
+        elif cache_type == Memory.DirectMapped:
+            self.cache = CacheDM(length, self.__write, self.__read)
+            self.use_cache = True
+            print("Cache enabled, direct-mapped, length = ", length)
+        else:
+            self.cache = None
+            self.use_cache = False
+            print("Cache disabled")
+
+    def reset(self):
+        self.clock = 0
+        for i in range(Memory.ROM // 2):
+            self.data[i] = 0
+        if self.cache is not None:
+            self.cache.reset()
+
+    def __read(self, word_addr):
+        word = self.data[word_addr]
+        print("Memory : read  0x{0:04x} =  0x{1:04x}".format(word_addr * 2, word))
+        self.clock += 1
         return word
 
-    def write(self, addr, word):
+    def read(self, addr):
+        if self.use_cache:
+            word = self.cache.read(addr // 2)
+        else:
+            word = self.__read(addr // 2)
+        return word
+
+    def __write(self, word_addr, word):
+        print("Memory : write 0x{0:04x} <- 0x{1:04x}".format(word_addr * 2, word))
+        self.data[word_addr] = word
+        self.clock += 1
+
+    def __io_write(self, addr, word):
         if (addr == 0xFC00):
             print("I/O    : display <- {}".format(word))
             self.display_handler(word)
+            self.clock += 1
         else:
-            print("Memory : write 0x{0:04x} <- 0x{1:04x}".format(addr, word))
-            self.data[addr // 2] = word
+            print("I/O    : ERROR")
+
+    def write(self, addr, word):
+        if (addr >= self.IO):
+            self.__io_write(addr, word)
+        else:
+            if self.use_cache:
+                self.cache.write(addr // 2, word)
+            else:
+                self.__write(addr // 2, word)
 
     def set_display_handler(self, func):
         self.display_handler = func
@@ -57,35 +109,17 @@ class Memory:
         for idx in range(Memory.VRAM // 2, Memory.ROM // 2):
             yield self.data[idx]
 
-    def fill_vram(self):
-        for idx in range(Memory.VRAM // 2, Memory.ROM // 2):
-            self.data[idx] = random.randint(0, 255)
-
-    def fill_vram_with_sharp(self):
-        for block in range(Memory.VRAM // 8, Memory.ROM // 8):
-            pos = block * 4
-            self.data[pos] = 0x2424
-            self.data[pos + 1] = 0xFF24
-            self.data[pos + 2] = 0x24FF
-            self.data[pos + 3] = 0x2424
-
-    def fill_vram_with_line(self):
-        for block in range(Memory.VRAM // 32, Memory.ROM // 32):
-            pos = block * 16
-            self.data[pos] = 0xFFFF
-            self.data[pos + 1] = 0xFFFF
-            self.data[pos + 2] = 0xFFFF
-            self.data[pos + 3] = 0xFFFF
-            self.data[pos + 4] = 0x0000
-            self.data[pos + 5] = 0x0000
-            self.data[pos + 6] = 0x0000
-            self.data[pos + 7] = 0x0000
-            self.data[pos + 8] = 0x1818
-            self.data[pos + 9] = 0x1818
-            self.data[pos + 10] = 0x1818
-            self.data[pos + 11] = 0x1818
-            self.data[pos + 12] = 0x1818
-            self.data[pos + 13] = 0x1818
-            self.data[pos + 14] = 0x1818
-            self.data[pos + 15] = 0x1818
-
+    def load_font(self, addr):
+        img = tk.PhotoImage(file="font.ppm")
+        for block_y in range(16):
+            for block_x in range(16):
+                for word in range(4):
+                    pix_word = 0x0000
+                    for bit in range(16):
+                        pix = img.get(block_x * 8 + bit % 8, block_y * 8 + word * 2 + bit // 8)
+                        if pix[0] == 0:
+                            pix_word = pix_word >> 1
+                        else:
+                            pix_word = (pix_word >> 1) | 0x8000
+                    idx = addr // 2 + (block_y * 16 + block_x) * 4 + word
+                    self.data[idx] = pix_word

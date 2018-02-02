@@ -9,6 +9,17 @@ class RegFile:
         self.n = False
         self.t = False
         self.regs[7] = init_pc
+        self.init_pc = init_pc
+
+    def reset(self):
+        for i in range(7):
+            self.regs[i] = 0x0000
+        self.c = False
+        self.v = False
+        self.z = False
+        self.n = False
+        self.t = False
+        self.regs[7] = self.init_pc
 
     def __getitem__(self, key):
         print("RegFile: R{0} = 0x{1:04X}".format(key, self.regs[key]))
